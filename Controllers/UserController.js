@@ -1,127 +1,143 @@
-import mongoose from 'mongoose';
-import { UserModel } from '../models/Usermodel.js';
-import { generateToken } from "../utils/util.js";
+import mongoose from "mongoose";
+import {User} from "../models/userModel.js";
+import {generateToken} from "../utils/util.js";
 
-export const createUser = async(req, res) => {
-    try {
-        const org = new  UserModel(req.body);
-        await org.save();
-        res.json({
-            message: "User created successfully",
-            data: org
+
+//Create New User
+export const signUp = async (req, res) => {
+            try{
+    const {username,email,password,role} = req.body;
+
+    const userExist = await User.findOne({email});
+
+    if (userExist){
+        res.send(400);
+        throw new Error(`Message: User already exist!`);
+    }
+    const newUser = await User.create({
+        username,
+        email,
+        password,
+        role
+    });
+
+    if(newUser) {
+        res.status(200).json({
+            _id: newUser._id,
+            username: newUser.username,
+            email: newUser.email,
+            role: newUser.role,
+            token: generateToken(newUser._id),
         })
+    } 
+} catch (error){
+    console.error(error.message)
+}
+    }
+    //Log in User
+
+export const signIn = async(req,res) => {
+        try{
+    const {email, password} = req.body;
+
+    const userIn =await User.findOne({email});
+
+    if (!userIn) {
+
+        res.send(401);
+
+        throw new Error(`Message: Authentication failed. Invalid email or Password`);
+}
+return  res.status(200).json({
+
+    _id: userIn._id,
+    name: userIn.name,
+    email: userIn.email,
+    token:generateToken(userIn._id),
+});
+} 
+catch (error){
+    console.error(error.message)
+}
+} 
+
+//Get all users from database
+export const getAllUsers = async(req,res) => {
+    try {
+        const allUsers = await User.find(); 
+        if (allUsers) {
+            res.status(200).json({
+                Message:"All Users Found!",
+                data: allUsers});
+        } else {
+            res.status(404).json({
+                message: "No User found!"
+            })
+}
     } catch (error) {
         console.error(error.message);
     }
+
 }
-export const getAllUsers = async(req, res) => {
-    try {
-        const org = await org.find();
-        if(org) {
-            res.send(org);
-        }else{
-            res.send("No User Found");
-        }
-    }catch (error) {
-        console.error(error.message);
-    }
-}
-export const getUsers = async(req, res) => {
-    try{
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.json({
-                message: "User not found"
+//Get a single User
+export const getUser = async(req, res) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+               return res.status(404).json({ 
+                message:"User not found!"
             });
-        }
-        const id = req.params.id;
-        const org = awaitUser.findById(id);
-        if(org) {
-            res.send(org);
-        }
-        }catch (error) {
+            }
+            const id = req.params.id;
+            const singleUser= await User.findById(id);
+            if(singleUser){
+                res.status(200).json({
+                    message: "User found successfully!",
+                    data: singleUser });
+            }
+        } catch (error) {
             console.error(error.message);
-    }
-}
-export const updateUser = async(req, res) => {
-    try{
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.json({
-                message: "User not found"
-            });
         }
-        const id = req.params.id;
-        const org = awaitUser.findByIdAndUpdate(id, req.body, {
+    }
+//Update a User
+
+    export const updateUser = async(req,res) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+               return res.status(404).json({ 
+                message:"User not found!"
+            });
+            } 
+            const id = req.params.id;
+        const updatedUser = await User.findByIdAndUpdate(id, req.body, {
             new: true,
             runValidators: true
         })
-        if(org) {
-            res.json({
-                message: "User updated successfully",
-                data: org
+        if (updatedUser) {
+            res.status(200).json({
+                message:"User updated successfully!",
+                data: updatedUser
             });
         }
     } catch (error) {
         console.error(error.message);
     }
 }
-export const deleteUser = async(req, res) => {
-    try{
+        //Delete a User
+
+export const deleteUser = async(req,res) => {
+    try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.json({
-                message: "User not found"
-            });
+            return res.status(404).json({message: "Invalid id provided!"})
         }
-        const id = req.params.id;
-        const org = awaitUser.findByIdAndDelete(id);
-        if(org) {
-            res.json({
-                message: "User deleted successfully"
-            });
+    
+    const id = req.params.id;
+    const deletedUser = await User.findByIdAndDelete(id);
+        if(deletedUser){
+            res.status(200).json({
+                message:"User deleted successfully"
+                });
         }
     } catch (error) {
         console.error(error.message);
     }
-}
-export const signUp = async (req, res) => {
-    const { Username, Password, Email, Role } = req.body;
-  
-    const userExists = await UserModel.findOne({ Email });
-  
-    if (userExists) {
-      throw new Error("User already exists");
-    }
-  
-    const newUser = await UserModel.create({
-      Username,
-      Email,
-      Password,
-      Role
-    })
-    if (newUser) {
-      res.status(200).json({
-        _id: newUser._id,
-        Username: newUser.name,
-        Email: newUser.Email,
-        Role: newUser.Role,
-        token: generateToken(newUser._id)
-      })
-    }
-  
-  }
-  
-export const loginUser = async(req, res) => {
-    const { Email, Password } = req.body;
-    try{
-    const user = await UserModel.login({ Email, Password });
-    const token = await generateToken(user._id)
-    if(!user) {
-        throw new Error("Invalid email or password");
-    }
-    if (user) {
-        return res.status(200).send({msg: `${UserModel.Username}, you logged in successfully`, token});
-    }
-}catch (err) {
-    console.log(err);
-    res.status(500).send('An error occured')
-}
 }

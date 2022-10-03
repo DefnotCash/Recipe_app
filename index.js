@@ -1,22 +1,28 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import {connectDB} from './config/db.js';
-import UserRoute from './Routes/UserRoute.js'
-import RecipeRoute from './Routes/RecipeRoute.js'
+import express from "express";
+import dotenv from "dotenv"
+import {connectDB} from "./config/db.js"
+import recipeRoutes from "./routes/recipeRoutes.js"
+import userRoutes from "./routes/userRoutes.js"
 
-dotenv.config();
-connectDB();
+
+dotenv.config()
+connectDB()
 
 const app = express();
 
 app.use(express.json())
-const port = 4500;
 
-app.use("/recipe", RecipeRoute)
-app.use("/user", UserRoute)
-app.use("/signup", UserRoute)
-app.use("login", UserRoute)
+const port = 8000;
+
+
+app.get('/', (req,res) => {
+    res.send(`Hello world!`)
+})
+
+app.use("/recipe", recipeRoutes);
+app.use("/user", userRoutes);
+
 
 app.listen(port, () => {
-    console.log(`Recipe App is running at port ${port}`)
-});
+    console.log(`Cash's Server is running on ${port}`);
+} )

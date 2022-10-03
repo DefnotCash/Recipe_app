@@ -1,58 +1,65 @@
-import mongoose from "mongoose";
-import bcrypt from 'bcrypt'
+import mongoose from "mongoose"
+import bcrypt from "bcryptjs"
 
-const UserSchema = new mongoose.Schema(
-    {
-        Username: {
-            type: String,
-            required: true,
-            unique: true
-        },
-            Email: {
-                type: String,
-                required: true,
-                unique: true,
-                trim: true,
-                lowercase: true
-            },
-            Password: {
-                type: String,
-                required: true
-            },
-            Role:{
-                type: String,
-                enum: ["Regular", "Professional"],
-                required: true,
-            },
-            isAdmin: {
-                type: Boolean,
-                default: false
-            },
-        },
-        {
-            timestamps: true
-        }
-)
-    UserSchema.pre('save', async function(next){
-    const user = this
-    if(user.isModified('Password')) {
-        const salt = await bcrypt.genSalt();
-        user.Password = await bcrypt.hash(user.Password, salt);
-        next()
+const userSchema = new mongoose.Schema({
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    
+    email: 
+      {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+      },
+
+    password: {
+        type: String,
+        required: true,
+    },
+
+    role: {
+        type: String,
+        enum: ["regular", "professional"],
+        required: true,
+        default:"regular",
+      }, 
+
+    isAdmin: {
+      type: Boolean ,
+      default: false ,
+      required: true ,
+    },
+    }, {
+    timestamps: true,
     }
-    next()
-  })
-   UserSchema.statics.login = async function(Email, Password) {
-     const user = await this.findOne({Email});
-     if(user) {
-         const auth = await bcrypt.compare(Password, user.Password);
-         if(auth) {
-             return user;
-         }
-         return 'Incorrect password'
-   }else {
-       return 'Incorrect Email'
-  }
- }
+)
 
-export const UserModel =  mongoose.model('user', UserSchema)
+userSchema.pre('save', async function(next){
+    this
+  if(this.isModified('password')){
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password,salt);
+      next();
+  }
+})
+
+// userSchema.statics.signin = async function(email,password){
+//   const user = await this.findOne({email});
+//   if(user) {
+//       const auth = await bcrypt.compare(password, user.password);
+//       if(auth){
+//           return user;
+//       }else{
+//       throw Error("Incorrect Password")
+//       }
+//       throw Error ("incorrect email")
+//   }
+// }
+
+export const User = mongoose.model("User", userSchema)
