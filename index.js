@@ -12,7 +12,7 @@ const app = express();
 
 app.use(express.json())
 
-const port = 4500;
+const port = process.env.port || 4500;
 
 
 app.get('/', (req,res) => {
